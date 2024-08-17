@@ -1,5 +1,7 @@
 use colored::*;
+use reqwest::StatusCode;
 use serde::Deserialize;
+use std::error::Error;
 use std::{env, io};
 
 // Struct to desierialise the JSON response from OpenWeatherMap API
@@ -36,24 +38,37 @@ fn get_weather_info(
     city: &str,
     country_code: &str,
     api_key: &str,
-) -> Result<WeatherResponse, reqwest::Error> {
+) -> Result<WeatherResponse, Box<dyn Error>> {
     // https://docs.openweather.co.uk/current
     let url: String = format!(
         "http://api.openweathermap.org/data/2.5/weather?q={},{}&units=metric&appid={}",
         city, country_code, api_key
     );
-    println!("Debugging: {}", &url);
 
     let response = reqwest::blocking::get(&url)?;
-    let response_json: WeatherResponse = response
-        .json::<WeatherResponse>()
-        .expect("Unable to decode message from OpenWeatherAPI");
+    match response.status() {
+        StatusCode::OK => {
+            // If the status is 200 (OK), try to parse the JSON response
+            let response_json = response.json::<WeatherResponse>()?;
+            Ok(response_json)
+        }
+        status => {
+            // Log the status code and response body if the request was not successful
+            let body = response
+                .text()
+                .unwrap_or_else(|_| "Unable to retrieve body".to_string());
 
-    Ok(response_json)
+            // Return a custom error with the status code and response body
+            Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Request failed with status: {} and body: {}", status, body),
+            )))
+        }
+    }
 }
 
 // Function to display the weather information
-fn display_weather_info(response: &WeatherResponse) -> () {
+fn display_weather_info(response: &WeatherResponse) {
     // Extract the weather information from the response
     let description: &String = &response.weather[0].description;
     let temprature: f64 = response.main.temp;
@@ -80,11 +95,11 @@ fn display_weather_info(response: &WeatherResponse) -> () {
     fn get_temp_emoji(temprature: f64) -> &'static str {
         if temprature < 0.0 {
             "❄️"
-        } else if temprature >= 0.0 && temprature < 10.0 {
+        } else if (0.0..10.0).contains(&temprature) {
             "☁️"
-        } else if temprature >= 10.0 && temprature < 20.0 {
+        } else if (10.0..20.00).contains(&temprature) {
             "⛅"
-        } else if temprature >= 20.0 && temprature < 30.0 {
+        } else if (20.0..30.0).contains(&temprature) {
             "🌤️"
         } else {
             "🔥"
