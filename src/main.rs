@@ -71,35 +71,35 @@ fn get_weather_info(
 fn display_weather_info(response: &WeatherResponse) {
     // Extract the weather information from the response
     let description: &String = &response.weather[0].description;
-    let temprature: f64 = response.main.temp;
+    let temperature: f64 = response.main.temp;
     let humidity: f64 = response.main.humidity;
     let pressure: f64 = response.main.pressure;
     let wind_speed: f64 = response.wind.speed;
     // Formatting weather information into a string
     let weather_text: String = format!(
         "Weather in {}: {} {}
-        > Temprature: {:.1}
+        > Temperature: {:.1}
         > Humidity: {:.1}%
         > Pressure {:.1} hPa
         > Wind Speed: {:.1} m/s",
         response.name,
         description,
-        get_temp_emoji(temprature),
-        temprature,
+        get_temp_emoji(temperature),
+        temperature,
         humidity,
         pressure,
         wind_speed
     );
 
-    // Function to get emoji based on temprature
-    fn get_temp_emoji(temprature: f64) -> &'static str {
-        if temprature < 0.0 {
+    // Function to get emoji based on temperature
+    fn get_temp_emoji(temperature: f64) -> &'static str {
+        if temperature < 0.0 {
             "❄️"
-        } else if (0.0..10.0).contains(&temprature) {
+        } else if (0.0..10.0).contains(&temperature) {
             "☁️"
-        } else if (10.0..20.00).contains(&temprature) {
+        } else if (10.0..20.00).contains(&temperature) {
             "⛅"
-        } else if (20.0..30.0).contains(&temprature) {
+        } else if (20.0..30.0).contains(&temperature) {
             "🌤️"
         } else {
             "🔥"
@@ -135,7 +135,7 @@ fn main() {
         let mut country_code = String::new();
         io::stdin()
             .read_line(&mut country_code)
-            .expect("Uh oh, failed to read city!");
+            .expect("Uh oh, failed to read country code!");
         let country_code: &str = country_code.trim();
 
         // OpenWeatherMap API key
