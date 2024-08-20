@@ -38,6 +38,7 @@ fn get_weather_info(
     city: &str,
     country_code: &str,
     api_key: &str,
+    client: &reqwest::blocking::Client,
 ) -> Result<WeatherResponse, Box<dyn Error>> {
     // https://docs.openweather.co.uk/current
     let url: String = format!(
@@ -45,7 +46,7 @@ fn get_weather_info(
         city, country_code, api_key
     );
 
-    let response = reqwest::blocking::get(&url)?;
+    let response = client.get(&url).send()?;
     match response.status() {
         StatusCode::OK => {
             // If the status is 200 (OK), try to parse the JSON response
@@ -122,6 +123,8 @@ fn display_weather_info(response: &WeatherResponse) {
 }
 
 fn main() {
+    let client = reqwest::blocking::Client::new();
+
     println!("{}", "Welcome to Weather Station!".bright_yellow());
     loop {
         println!("{}", "Please enter the name of the city:".bright_green());
@@ -142,7 +145,7 @@ fn main() {
         let api_key = env::var("OPEN_WEATHER_API_KEY").unwrap_or("NO_API_KEY".to_string());
 
         // Calling the function to fetch weather information
-        match get_weather_info(city, country_code, &api_key) {
+        match get_weather_info(city, country_code, &api_key, &client) {
             Ok(response) => display_weather_info(&response),
             Err(err) => eprintln!("Error: {}", err),
         }
